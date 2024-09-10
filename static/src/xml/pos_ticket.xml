@@ -2,13 +2,13 @@
 <templates id="template" xml:space="preserve">
     <t t-name="l10n_ar_pos_einvoice_ticket.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
         <xpath expr="//div[@class='pos-receipt']" position="attributes">
-            <attribute name="t-att-style" position="add" separator=" ">'font-size: 8px !important;'</attribute>
+            <attribute name="t-att-style" position="add" separator=" ">'font-size: 10px !important;'</attribute>
         </xpath>
         <xpath expr="//div[@class='pos-receipt-amount receipt-change mt-2']" position="attributes"> 
-             <attribute name="t-att-style" position="add" separator=" ">'font-size: 8px !important;margin-top:0 !important;padding-left:0 !important;'</attribute>
+             <attribute name="t-att-style" position="add" separator=" ">'font-size: 10px !important;margin-top:0 !important;padding-left:0 !important;'</attribute>
         </xpath>
         <xpath expr="//div[@class='pos-receipt-amount']" position="attributes"> 
-             <attribute name="t-att-style" position="add" separator=" ">'font-size: 8px !important;margin-top:0 !important;padding-left:0 !important;margin-bottom:0 !important;'</attribute>
+             <attribute name="t-att-style" position="add" separator=" ">'font-size: 10px !important;margin-top:0 !important;padding-left:0 !important;margin-bottom:0 !important;'</attribute>
         </xpath>
 
         <xpath expr="//div[@class=&quot;pos-receipt-amount&quot;]/following-sibling::br[1]" position="replace"/>

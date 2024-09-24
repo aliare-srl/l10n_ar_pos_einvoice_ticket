@@ -22,6 +22,7 @@ patch(PosStore.prototype, {
                             const current_order = self.get_order();
                             current_order.invoice_number = invoice_number;
                             current_order.invoice_letter = invoice_letter;
+                            current_order.company_parent_name = current_order.pos.company.parent_id[1]
                             orm.call(
                                 "res.company",
                                 "search_read",
@@ -122,6 +123,9 @@ patch(Order.prototype, {
         }
         if(this.company_parent){
             result.headerData.company_parent = this.company_parent;
+        }
+        if(this.company_parent_name){
+            result.headerData.company_parent_name = this.company_parent_name;
         }
         return result;
     },

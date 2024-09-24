@@ -39,7 +39,7 @@
     </t>
     <t t-name="l10n_ar_pos_einvoice_ticket.ReceiptHeader" t-inherit="point_of_sale.ReceiptHeader" t-inherit-mode="extension">
         <xpath expr="//div[@t-if='props.data.company.partner_id?.[1]']" position="replace">
-            <div t-if="props.data.company_parent?.name" t-esc="props.data.company_parent.name" />
+            <div t-if="props.data.company_parent_name" t-esc="props.data.company_parent_name" />
             <div t-else="props.data.company.partner_id?.[1]" t-esc="props.data.company.partner_id[1]" />
         </xpath>
         <xpath expr="//t[@t-if='props.data.company.vat']" position="replace">

@@ -33,9 +33,11 @@
         <xpath expr="//div[@class='before-footer']" position="attributes">
             <attribute name="t-att-style" position="add" separator=" ">'display: none;'</attribute>
         </xpath>
+        <!--
         <xpath expr="//div[@class='pos-receipt-taxes']" position="attributes">
             <attribute name="t-if" position="add" separator=" and ">props.data.headerData.invoice_letter !== 'B'</attribute>
         </xpath>
+        -->
     </t>
     <t t-name="l10n_ar_pos_einvoice_ticket.ReceiptHeader" t-inherit="point_of_sale.ReceiptHeader" t-inherit-mode="extension">
         <xpath expr="//div[@t-if='props.data.company.partner_id?.[1]']" position="replace">

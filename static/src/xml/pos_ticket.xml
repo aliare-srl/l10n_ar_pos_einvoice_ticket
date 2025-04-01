@@ -30,10 +30,110 @@
                 </div>
             </t>
         </xpath>
+        <!--
+        <xpath expr="//div[@class='before-footer']/preceding-sibling::div[1]" position="replace">
+            <div t-if="props.data.tax_details.length > 0" class="pos-receipt-taxes" style="
+                display: flex;
+                flex-direction: column;
+            ">
+                <div style="display: flex; justify-content: flex-start;">
+                    <span style="width: 0;"></span>
+                    <span style="width: 40%; font-weight: bold;">Tax</span>
+                    <span style="width: 30%; font-weight: bold;">Amount</span>
+                </div>
+            
+                <t t-foreach="props.data.tax_details" t-as="tax" t-key="tax.tax.id">
+                    <div style="display: flex; justify-content: flex-start;">
+                        <span style="width: 0;"></span>
+                        <span style="width: 40%;" t-esc="tax.name"/>
+                        <span style="width: 30%;" t-esc="props.formatCurrency(tax.amount, false)"/>
+                    </div>
+                </t>
+            </div>
+        </xpath>
+        -->
+        <xpath expr="//div[@class='pos-receipt-taxes']" position="attributes">
+            <attribute name="t-if" position="add" separator=" and ">props.data.headerData.invoice_letter !== 'B'</attribute>
+        </xpath>
+        <xpath expr="//div[@class='before-footer']/preceding-sibling::div[1]" position="before">
+            <div t-if="props.data.tax_details.length > 0 and props.data.headerData.invoice_letter == 'B'">
+            <div style="margin-top:5px;">
+                <span>Regimen de Transparencia Fiscal al Consumidor</span>
+                <span> (Ley 27.743)</span>
+            </div>
+            </div>
+        </xpath>
+       <xpath expr="//div[@class='before-footer']/preceding-sibling::div[1]" position="replace">
+            <div t-if="props.data.tax_details.length > 0 and props.data.headerData.invoice_letter == 'B'" class="pos-receipt-taxes" style="
+                display: flex;
+                flex-direction: column;
+            ">
+                <div style="display: flex; justify-content: flex-start;">
+                    <span style="width: 0;"></span>
+                    <span style="width: 40%; font-weight: bold;">Tax</span>
+                    <span style="width: 30%; font-weight: bold;">Amount</span>
+                </div>
+        
+                <t t-set="combined_iva" t-value="{ 'amount': 0, 'count': 0 }"/>
+                <t t-foreach="props.data.tax_details" t-as="tax" t-key="'tax-'+tax_index">
+                    <t t-if="tax.name.includes('IVA 21%') or tax.name.includes('IVA 10.5%')">
+                        <t t-set="combined_iva" t-value="{
+                            'amount': combined_iva.amount + tax.amount,
+                            'count': combined_iva.count + 1
+                        }"/>
+                    </t>
+                </t>
+        
+                <t t-if="combined_iva.count == 2">
+                    <div style="display: flex; justify-content: flex-start;">
+                        <span style="width: 0;"></span>
+                        <span style="width: 40%;">IVA</span>
+                        <span style="width: 30%;" t-esc="props.formatCurrency(combined_iva.amount, false)"/>
+                    </div>
+                </t>
+        
+                <t t-foreach="props.data.tax_details" t-as="tax" t-key="'tax-item-'+tax_index">
+                    <t t-if="combined_iva.count != 2 or (!tax.name.includes('IVA 21%') &amp;&amp; !tax.name.includes('IVA 10.5%'))">
+                        <div style="display: flex; justify-content: flex-start;">
+                            <span style="width: 0;"></span>
+                            <t t-if="tax.name.includes('IVA 21%') or tax.name.includes('IVA 10.5%')">
+                                <span style="width: 40%;">IVA </span>
+                            </t>
+                            <t t-else="">
+                                 <span style="width: 40%;" t-esc="tax.name"/>
+                            </t>
+                            <span style="width: 30%;" t-esc="props.formatCurrency(tax.amount, false)"/>
+                        </div>
+                    </t>
+                </t>
+            </div>
+           <div t-else="" class="pos-receipt-taxes">
+                <span />
+                <span>Tax</span>
+                <span>Amount</span>
+                <span>Base</span>
+                <span>Total</span>
+                <t t-foreach="props.data.tax_details" t-as="tax" t-key="tax.tax.id">
+                    <span t-esc="tax.tax.letter || ''"/>
+                    <span t-if="tax.tax.amount_type != 'fixed'"><t t-esc="tax.tax.amount"/>%</span>
+                    <span t-else="" t-esc="tax.tax.name"/>
+                    <span t-esc="props.formatCurrency(tax.amount, false)" />
+                    <span t-esc="props.formatCurrency(tax.base, false)" />
+                    <span t-esc="props.formatCurrency(tax.amount + tax.base, false)" />
+                </t>
+                <t t-if="props.data.tax_details.length > 1">
+                    <span />
+                    <span />
+                    <span t-esc="props.formatCurrency(props.data.amount_tax, false)" />
+                    <span t-esc="props.formatCurrency(props.data.total_without_tax, false)" />
+                    <span t-esc="props.formatCurrency(props.data.amount_total, false)" />
+                </t>
+            </div>
+        </xpath>
         <xpath expr="//div[@class='before-footer']" position="attributes">
             <attribute name="t-att-style" position="add" separator=" ">'display: none;'</attribute>
         </xpath>
-        <!--
+           <!--
         <xpath expr="//div[@class='pos-receipt-taxes']" position="attributes">
             <attribute name="t-if" position="add" separator=" and ">props.data.headerData.invoice_letter !== 'B'</attribute>
         </xpath>
@@ -143,7 +243,8 @@
         <xpath expr="//div[@t-if='props.data.trackingNumber and !props.data.bigTrackingNumber']" position="attributes">
             <attribute name="t-att-style" add="('display: none;')"/>
         </xpath>
-        <xpath expr="//div[contains(., 'DESCRIPCIÓN')]/following-sibling::br" position="replace"/>
+        <!--<xpath expr="//div[contains(., 'DESCRIPCIÓN')]/following-sibling::br" position="replace"/>-->
+        
     </t>
 
 </templates>

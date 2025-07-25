@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'POS einvoice ticket',
-    'version': '17.0.1.0',
+    'version': '18.0.1.0',
     'author': 'Valentin Romero - Devoo',
     'license': 'LGPL-3',
     'category': 'Point Of Sale',

@@ -121,6 +121,14 @@
       <attribute name="t-att-style" position="add" separator=" "> 'display: none;' </attribute>
     </xpath>
 
+    <!-- NUEVO: Agregar Régimen de Transparencia Fiscal al final, luego de los totales -->
+    <xpath expr="//div[contains(@class, 'pos-receipt-totals')]" position="after">
+      <div t-if="props.data.tax_details.length > 0 and props.data.headerData.invoice_letter == 'B'" style="margin-top:10px; font-size: 10px; text-align: center;">
+        <span>Régimen de Transparencia Fiscal al Consumidor</span><br/>
+        <span>(Ley 27.743)</span>
+      </div>
+    </xpath>
+
   </t>
 
   <!-- Cabecera del ticket -->

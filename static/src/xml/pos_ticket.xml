@@ -1,211 +1,234 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
-    <t t-name="l10n_ar_pos_einvoice_ticket.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
-        <xpath expr="//div[@class='pos-receipt']" position="attributes">
-            <attribute name="t-att-style" position="add" separator=" ">font-size: 10px !important;</attribute>
-        </xpath>
-        <xpath expr="//div[@class='pos-receipt-amount receipt-change mt-2']" position="attributes"> 
-            <attribute name="t-att-style" position="add" separator=" ">font-size: 10px !important;margin-top:0 !important;padding-left:0 !important;</attribute>
-        </xpath>
-        <xpath expr="//div[@class='pos-receipt-amount']" position="attributes"> 
-            <attribute name="t-att-style" position="add" separator=" ">font-size: 10px !important;margin-top:0 !important;padding-left:0 !important;margin-bottom:0 !important;</attribute>
-        </xpath>
 
-        <!-- Eliminación de <br/> opcional, revisar si es necesario -->
-        <xpath expr="//div[@class='pos-receipt-amount']/following-sibling::br[1]" position="replace"/>
+  <t t-name="l10n_ar_pos_einvoice_ticket.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
 
-        <xpath expr="//div[@class='before-footer']" position="after">
-            <t t-if="props.data.headerData && props.data.headerData.l10n_ar_afip_auth_code && props.data.headerData.pos && props.data.headerData.pos.config && props.data.headerData.pos.config.receipt_invoice_number">
-                <div class="afip-cae-info" style="text-align: center; font-size: 100%; margin-top: 30px;">
-                    <t t-if="props.data.headerData.l10n_ar_afip_qr_code">
-                        <div style="overflow: hidden;">
-                            <img t-attf-src="/report/barcode/?barcode_type=QR&amp;value={{ props.data.headerData.l10n_ar_afip_qr_code }}&amp;width=400&amp;height=400" style="width:150px;height:150px;"/>
-                        </div>
-                    </t>
-                    <strong>CAE:</strong> <t t-esc="props.data.headerData.l10n_ar_afip_auth_code"/>
-                    <div style="margin-top:2px;">
-                        <strong>Vto. CAE:</strong> <t t-esc="props.data.headerData.l10n_ar_afip_auth_code_due"/>
-                    </div>
-                </div>
-            </t>
-        </xpath>
+    <!-- Ajuste estilos generales -->
+    <xpath expr="//div[@class='pos-receipt']" position="attributes">
+      <attribute name="t-att-style" position="add" separator=" "> 'font-size: 10px !important;' </attribute>
+    </xpath>
 
-        <xpath expr="//div[@class='pos-receipt-taxes']" position="attributes">
-            <attribute name="t-if" position="add" separator=" and ">props.data.headerData.invoice_letter !== 'B'</attribute>
-        </xpath>
+    <xpath expr="//div[contains(@class, 'pos-receipt-amount') and contains(@class, 'receipt-change')]" position="attributes">
+      <attribute name="t-att-style" position="add" separator=" "> 'font-size: 10px !important;margin-top:0 !important;padding-left:0 !important;' </attribute>
+    </xpath>
 
-        <xpath expr="//div[@class='before-footer']/preceding-sibling::div[1]" position="replace">
-            <div t-if="props.data.tax_details.length > 0 && props.data.headerData.invoice_letter == 'B'" class="pos-receipt-taxes" style="display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: flex-start;">
-                    <span style="width: 0;"></span>
-                    <span style="width: 40%; font-weight: bold;">Tax</span>
-                    <span style="width: 30%; font-weight: bold;">Amount</span>
-                </div>
+    <xpath expr="//div[contains(@class, 'pos-receipt-amount') and not(contains(@class, 'receipt-change'))]" position="attributes">
+      <attribute name="t-att-style" position="add" separator=" "> 'font-size: 10px !important;margin-top:0 !important;padding-left:0 !important;margin-bottom:0 !important;' </attribute>
+    </xpath>
 
-                <t t-set="combined_iva" t-value="{ 'amount': 0, 'count': 0 }"/>
-                <t t-foreach="props.data.tax_details" t-as="tax" t-key="'tax-'+tax_index">
-                    <t t-if="tax.name.includes('IVA 21%') || tax.name.includes('IVA 10.5%')">
-                        <t t-set="combined_iva" t-value="{
-                            'amount': combined_iva.amount + tax.amount,
-                            'count': combined_iva.count + 1
-                        }"/>
-                    </t>
-                </t>
+    <!-- Eliminar los <br/> que sobran -->
+    <xpath expr="//div[contains(@class, 'pos-receipt-amount')]/following-sibling::br[1]" position="replace"/>
+    <xpath expr="//div[contains(@class, 'pos-receipt-amount')]/following-sibling::br[1]" position="replace"/>
 
-                <t t-if="combined_iva.count == 2">
-                    <div style="display: flex; justify-content: flex-start;">
-                        <span style="width: 0;"></span>
-                        <span style="width: 40%;">IVA</span>
-                        <span style="width: 30%;" t-esc="props.formatCurrency(combined_iva.amount, false)"/>
-                    </div>
-                </t>
-
-                <t t-foreach="props.data.tax_details" t-as="tax" t-key="'tax-item-'+tax_index">
-                    <t t-if="combined_iva.count != 2 || (!tax.name.includes('IVA 21%') && !tax.name.includes('IVA 10.5%'))">
-                        <div style="display: flex; justify-content: flex-start;">
-                            <span style="width: 0;"></span>
-                            <t t-if="tax.name.includes('IVA 21%') || tax.name.includes('IVA 10.5%')">
-                                <span style="width: 40%;">IVA </span>
-                            </t>
-                            <t t-else="">
-                                <span style="width: 40%;" t-esc="tax.name"/>
-                            </t>
-                            <span style="width: 30%;" t-esc="props.formatCurrency(tax.amount, false)"/>
-                        </div>
-                    </t>
-                </t>
+    <!-- Información CAE, QR y vencimiento -->
+    <xpath expr="//div[@class='before-footer']" position="after">
+      <t t-if="props.data.headerData.l10n_ar_afip_auth_code and props.data.headerData.pos.config.receipt_invoice_number">
+        <div class="afip-cae-info" style="text-align: center; font-size: 100%; margin-top: 30px;">
+          <t t-if="props.data.headerData.l10n_ar_afip_qr_code">
+            <div style="overflow: hidden;">
+              <img t-attf-src="/report/barcode/?barcode_type={{'QR'}}&amp;value={{ props.data.headerData.l10n_ar_afip_qr_code }}&amp;width=400&amp;height=400" style="width:150px;height:150px;"/>
             </div>
-            <div t-else="" class="pos-receipt-taxes">
-                <span />
-                <span>Tax</span>
-                <span>Amount</span>
-                <span>Base</span>
-                <span>Total</span>
-                <t t-foreach="props.data.tax_details" t-as="tax" t-key="tax.tax.id">
-                    <span t-esc="tax.tax.letter || ''"/>
-                    <span t-if="tax.tax.amount_type != 'fixed'"><t t-esc="tax.tax.amount"/>%</span>
-                    <span t-else="" t-esc="tax.tax.name"/>
-                    <span t-esc="props.formatCurrency(tax.amount, false)" />
-                    <span t-esc="props.formatCurrency(tax.base, false)" />
-                    <span t-esc="props.formatCurrency(tax.amount + tax.base, false)" />
-                </t>
-                <t t-if="props.data.tax_details.length > 1">
-                    <span />
-                    <span />
-                    <span t-esc="props.formatCurrency(props.data.amount_tax, false)" />
-                    <span t-esc="props.formatCurrency(props.data.total_without_tax, false)" />
-                    <span t-esc="props.formatCurrency(props.data.amount_total, false)" />
-                </t>
+          </t>
+          <strong>CAE:</strong> <t t-esc="props.data.headerData.l10n_ar_afip_auth_code"/>
+          <div style="margin-top:2px;">
+            <strong>Vto. CAE:</strong> <t t-esc="props.data.headerData.l10n_ar_afip_auth_code_due"/>
+          </div>
+        </div>
+      </t>
+    </xpath>
+
+    <!-- Condicional para mostrar impuestos -->
+    <xpath expr="//div[@class='pos-receipt-taxes']" position="attributes">
+      <attribute name="t-if" position="add" separator=" and ">props.data.headerData.invoice_letter !== 'B'</attribute>
+    </xpath>
+
+    <!-- Ley 27.743 para letra B -->
+    <xpath expr="//div[@class='before-footer']/preceding-sibling::div[1]" position="before">
+      <div t-if="props.data.tax_details.length > 0 and props.data.headerData.invoice_letter == 'B'">
+        <div style="margin-top:5px;">
+          <span>Regimen de Transparencia Fiscal al Consumidor</span>
+          <span> (Ley 27.743)</span>
+        </div>
+      </div>
+    </xpath>
+
+    <!-- Reemplazo completo sección impuestos para letra B -->
+    <xpath expr="//div[@class='before-footer']/preceding-sibling::div[1]" position="replace">
+      <div t-if="props.data.tax_details.length > 0 and props.data.headerData.invoice_letter == 'B'" class="pos-receipt-taxes" style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: flex-start;">
+          <span style="width: 0;"></span>
+          <span style="width: 40%; font-weight: bold;">Tax</span>
+          <span style="width: 30%; font-weight: bold;">Amount</span>
+        </div>
+
+        <t t-set="combined_iva" t-value="{ 'amount': 0, 'count': 0 }"/>
+        <t t-foreach="props.data.tax_details" t-as="tax" t-key="'tax-'+tax_index">
+          <t t-if="tax.name.includes('IVA 21%') or tax.name.includes('IVA 10.5%')">
+            <t t-set="combined_iva" t-value="{'amount': combined_iva.amount + tax.amount, 'count': combined_iva.count + 1}"/>
+          </t>
+        </t>
+
+        <t t-if="combined_iva.count == 2">
+          <div style="display: flex; justify-content: flex-start;">
+            <span style="width: 0;"></span>
+            <span style="width: 40%;">IVA</span>
+            <span style="width: 30%;" t-esc="props.formatCurrency(combined_iva.amount, false)"/>
+          </div>
+        </t>
+
+        <t t-foreach="props.data.tax_details" t-as="tax" t-key="'tax-item-'+tax_index">
+          <t t-if="combined_iva.count != 2 or (!tax.name.includes('IVA 21%') &amp;&amp; !tax.name.includes('IVA 10.5%'))">
+            <div style="display: flex; justify-content: flex-start;">
+              <span style="width: 0;"></span>
+              <t t-if="tax.name.includes('IVA 21%') or tax.name.includes('IVA 10.5%')">
+                <span style="width: 40%;">IVA </span>
+              </t>
+              <t t-else="">
+                <span style="width: 40%;" t-esc="tax.name"/>
+              </t>
+              <span style="width: 30%;" t-esc="props.formatCurrency(tax.amount, false)"/>
             </div>
-        </xpath>
+          </t>
+        </t>
+      </div>
 
-        <xpath expr="//div[@class='before-footer']" position="attributes">
-            <attribute name="t-att-style" position="add" separator=" ">display: none;</attribute>
-        </xpath>
+      <div t-else="" class="pos-receipt-taxes">
+        <span />
+        <span>Tax</span>
+        <span>Amount</span>
+        <span>Base</span>
+        <span>Total</span>
+        <t t-foreach="props.data.tax_details" t-as="tax" t-key="tax.tax.id">
+          <span t-esc="tax.tax.letter || ''"/>
+          <span t-if="tax.tax.amount_type != 'fixed'"><t t-esc="tax.tax.amount"/>%</span>
+          <span t-else="" t-esc="tax.tax.name"/>
+          <span t-esc="props.formatCurrency(tax.amount, false)" />
+          <span t-esc="props.formatCurrency(tax.base, false)" />
+          <span t-esc="props.formatCurrency(tax.amount + tax.base, false)" />
+        </t>
+        <t t-if="props.data.tax_details.length > 1">
+          <span />
+          <span />
+          <span t-esc="props.formatCurrency(props.data.amount_tax, false)" />
+          <span t-esc="props.formatCurrency(props.data.total_without_tax, false)" />
+          <span t-esc="props.formatCurrency(props.data.amount_total, false)" />
+        </t>
+      </div>
+    </xpath>
 
-    </t>
+    <!-- Ocultar antes del footer -->
+    <xpath expr="//div[@class='before-footer']" position="attributes">
+      <attribute name="t-att-style" position="add" separator=" "> 'display: none;' </attribute>
+    </xpath>
 
-    <t t-name="l10n_ar_pos_einvoice_ticket.ReceiptHeader" t-inherit="point_of_sale.ReceiptHeader" t-inherit-mode="extension">
-        <xpath expr="//div[@t-if='props.data.company.partner_id?.[1]']" position="replace">
-            <div t-if="props.data.company_parent_name" t-esc="props.data.company_parent_name" />
-            <div t-else="" t-esc="props.data.company.partner_id?.[1]" />
-        </xpath>
-        <xpath expr="//t[@t-if='props.data.company.vat']" position="replace">
-            <div class="afip-info">
-                <t t-if='props.data.invoice_number'>
-                    <div>CUIT: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.vat"/><t t-else="" t-esc="props.data.company.vat"/></div>
-                    <div>Ing. Brutos: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_gross_income_number"/><t t-else="" t-esc="props.data.company.l10n_ar_gross_income_number"/></div>
-                    <div>Inicio de actividades: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_afip_start_date"/><t t-else="" t-esc="props.data.company.l10n_ar_afip_start_date"/></div>
-                    <div>
-                        Dirección: 
-                        <t t-esc="props.data.company.street"/>
-                        <t t-if="props.data.company.city">
-                            , <t t-esc="props.data.company.city"/>
-                        </t>
-                        <t t-if="props.data.company.state_id">
-                            , <t t-esc="props.data.company.state_id[1]"/>
-                        </t>
-                        <t t-if="props.data.company.country_id">
-                            , <t t-esc="props.data.company.country_id[1]"/>
-                        </t>
-                    </div>
-                    <div>IVA Responsable Inscripto</div>
-                </t>
+  </t>
+
+  <!-- Cabecera del ticket -->
+  <t t-name="l10n_ar_pos_einvoice_ticket.ReceiptHeader" t-inherit="point_of_sale.ReceiptHeader" t-inherit-mode="extension">
+
+    <xpath expr="//div[@t-if='props.data.company.partner_id?.[1]']" position="replace">
+      <div t-if="props.data.company_parent_name" t-esc="props.data.company_parent_name" />
+      <div t-else="props.data.company.partner_id?.[1]" t-esc="props.data.company.partner_id[1]" />
+    </xpath>
+
+    <xpath expr="//t[@t-if='props.data.company.vat']" position="replace">
+      <div class="afip-info">
+        <t t-if='props.data.invoice_number'>
+          <div>CUIT: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.vat"/><t t-else="" t-esc="props.data.company.vat"/></div>
+          <div>Ing. Brutos: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_gross_income_number"/><t t-else="" t-esc="props.data.company.l10n_ar_gross_income_number"/></div>
+          <div>Inicio de actividades: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_afip_start_date"/><t t-else="" t-esc="props.data.company.l10n_ar_afip_start_date"/></div>
+          <div>
+            Dirección: 
+            <t t-esc="props.data.company.street"/>
+            <t t-if="props.data.company.city">
+              , <t t-esc="props.data.company.city"/>
+            </t>
+            <t t-if="props.data.company.state_id">
+              , <t t-esc="props.data.company.state_id[1]"/>
+            </t>
+            <t t-if="props.data.company.country_id">
+              , <t t-esc="props.data.company.country_id[1]"/>
+            </t>
+          </div>
+          <div>IVA Responsable Inscripto</div>
+        </t>
+      </div>
+    </xpath>
+
+    <xpath expr="//div[@t-if='props.data.cashier']" position="replace">
+      <t t-if='props.data.invoice_number and props.data.pos.config.receipt_invoice_number'>
+        <div class="afip-invoice-info" >
+          <div class="text-center mb-1">
+            <span>__________________________________________________</span>
+          </div>
+          <strong>
+            <t t-esc="props.data.l10n_latam_document_name"/> 
+            - ORIGINAL
+            <t t-if="props.data.invoice_letter == 'A'">
+              - COD <t t-esc="props.data.l10n_latam_document_type_id"/>
+            </t>
+            <br />
+            N° DE FACTURA: <t t-esc="props.data.invoice_number"/><br />
+            FECHA: <t t-esc="props.data.invoice_date"/>
+          </strong>
+          <div class="text-center mb-1">
+            <span>__________________________________________________</span>
+          </div>
+        </div>
+      </t>
+      <t t-if='props.data.partner and props.data.pos.config.receipt_customer_vat'>
+        <div class="afip-client-info" >
+          <div>CLIENTE: <t t-esc='props.data.partner.name' /></div>
+          <t t-if='props.data.invoice_number'>
+            <t t-if="props.data.partner.l10n_latam_identification_type_id and props.data.partner.vat and props.data.partner.vat != ' '">
+              <t t-esc='props.data.partner.l10n_latam_identification_type_id[1]' />:
+            </t>
+            <t t-if="props.data.partner.vat and props.data.partner.vat != ' '">
+              <t t-esc='props.data.partner.vat' />
+            </t>
+            <t t-if="props.data.partner.l10n_ar_afip_responsibility_type_id and props.data.partner.name !='Consumidor Final'">
+              <div><t t-esc='props.data.partner.l10n_ar_afip_responsibility_type_id[1]' /></div>
+            </t>
+          </t>
+          <t t-if="props.data.partner.street">
+            <div>
+              CALLE: <t t-esc="props.data.partner.street"/>
+              <t t-if="props.data.partner.city">
+                , <t t-esc="props.data.partner.city"/>
+              </t>
+              <t t-if="props.data.partner.state_id">
+                , <t t-esc="props.data.partner.state_id[1]"/>
+              </t>
+              <t t-if="props.data.partner.country_id">
+                , <t t-esc="props.data.partner.country_id[1]"/>
+              </t>
             </div>
-        </xpath>
-        <xpath expr="//div[@t-if='props.data.cashier']" position="replace">
-            <t t-if='props.data.invoice_number and props.data.pos.config.receipt_invoice_number'>
-                <div class="afip-invoice-info" >
-                    <div class="text-center mb-1">
-                        <span>__________________________________________________</span>
-                    </div>
-                    <strong>
-                        <t t-esc="props.data.l10n_latam_document_name"/> 
-                        - ORIGINAL
-                        <t t-if="props.data.invoice_letter == 'A'">
-                            - COD <t t-esc="props.data.l10n_latam_document_type_id"/>
-                        </t>
-                        <br />
-                        N° DE FACTURA: <t t-esc="props.data.invoice_number"/><br />
-                        FECHA: <t t-esc="props.data.invoice_date"/>
-                    </strong>
-                    <div class="text-center mb-1">
-                        <span>__________________________________________________</span>
-                    </div>
-                </div>
+            <t t-if="props.data.partner.email">
+              <div>Email: <t t-esc="props.data.partner.email"/></div>
             </t>
-            <t t-if='props.data.partner and props.data.pos.config.receipt_customer_vat'>
-                <div class="afip-client-info" >
-                    <div>CLIENTE: <t t-esc='props.data.partner.name' /></div>
-                    <t t-if='props.data.invoice_number'>
-                        <t t-if="props.data.partner.l10n_latam_identification_type_id and props.data.partner.vat and props.data.partner.vat != ' '">
-                            <t t-esc='props.data.partner.l10n_latam_identification_type_id[1]' />:
-                        </t>
-                        <t t-if="props.data.partner.vat and props.data.partner.vat != ' '">
-                            <t t-esc='props.data.partner.vat' />
-                        </t>
-                        <t t-if="props.data.partner.l10n_ar_afip_responsibility_type_id and props.data.partner.name !='Consumidor Final'">
-                            <div><t t-esc='props.data.partner.l10n_ar_afip_responsibility_type_id[1]' /></div>
-                        </t>
-                    </t>
-                    <t t-if="props.data.partner.street">
-                        <div>
-                            CALLE: <t t-esc="props.data.partner.street"/>
-                            <t t-if="props.data.partner.city">
-                                , <t t-esc="props.data.partner.city"/>
-                            </t>
-                            <t t-if="props.data.partner.state_id">
-                                , <t t-esc="props.data.partner.state_id[1]"/>
-                            </t>
-                            <t t-if="props.data.partner.country_id">
-                                , <t t-esc="props.data.partner.country_id[1]"/>
-                            </t>
-                        </div>
-                        <t t-if="props.data.partner.email">
-                            <div>Email: <t t-esc="props.data.partner.email"/></div>
-                        </t>
-                        <t t-if="props.data.partner.phone or props.data.partner.mobile">
-                            <div>Tel: <t t-esc="props.data.partner.phone || props.data.partner.mobile"/></div>
-                        </t>
-                        <t t-if="props.data.partner.website">
-                            <div>Website: <t t-esc="props.data.partner.website"/></div>
-                        </t>
-                    </t>
-                </div>
+            <t t-if="props.data.partner.phone or props.data.partner.mobile">
+              <div>Tel: <t t-esc="props.data.partner.phone || props.data.partner.mobile"/></div>
             </t>
-            <br/>
-            <strong>
-                <div>DESCRIPCIÓN</div>
-                <div>
-                    CANT. x PRECIO UNIT.
-                    <span class="price_display pos-receipt-right-align">
-                    IMPORTE
-                    </span>
-                </div>
-            </strong>
-        </xpath>
-        <xpath expr="//div[@t-if='props.data.trackingNumber and !props.data.bigTrackingNumber']" position="attributes">
-            <attribute name="t-att-style" add="('display: none;')"/>
-        </xpath>
-    </t>
+            <t t-if="props.data.partner.website">
+              <div>Website: <t t-esc="props.data.partner.website"/></div>
+            </t>
+          </t>
+        </div>
+      </t>
+      <br/>
+      <strong>
+        <div>DESCRIPCIÓN</div>
+        <div>
+          CANT. x PRECIO UNIT.
+          <span class="price_display pos-receipt-right-align">IMPORTE</span>
+        </div>
+      </strong>
+    </xpath>
+
+    <xpath expr="//div[@t-if='props.data.trackingNumber and !props.data.bigTrackingNumber']" position="attributes">
+      <attribute name="t-att-style" add="('display: none;')" />
+    </xpath>
+
+  </t>
+
 </templates>

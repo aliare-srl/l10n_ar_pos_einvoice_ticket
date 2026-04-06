@@ -14,13 +14,8 @@
         'views/res_config_settings_views.xml',
     ],
     'assets': {
-        "point_of_sale.assets": [
-            "/l10n_ar_pos_einvoice_ticket/static/src/js/pos_model.js",
-            "/l10n_ar_pos_einvoice_ticket/static/src/js/PaymentScreen.js",
-            "/l10n_ar_pos_einvoice_ticket/static/src/css/pos_receipts.css",
-        ],
-        "web.assets_qweb": [
-            "/l10n_ar_pos_einvoice_ticket/static/src/xml/pos_ticket.xml",
+        "point_of_sale._assets_pos": [
+            "l10n_ar_pos_einvoice_ticket/static/src/**/*",
         ],
     },
     'installable': True,

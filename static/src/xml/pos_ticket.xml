@@ -28,6 +28,16 @@
       <div t-if="props.data.headerData.invoice_letter == 'B'" style="margin-top:10px; font-size: 10px; text-align: center;">
         <span>Régimen de Transparencia Fiscal al Consumidor</span><br/>
         <span>(Ley 27.743)</span>
+        <t t-if="props.data.taxTotals and props.data.taxTotals.has_tax_groups">
+          <t t-foreach="props.data.taxTotals.subtotals" t-as="subtotal">
+            <t t-foreach="subtotal.tax_groups" t-as="tax_group" t-key="tax_group.id">
+              <div>
+                <t t-esc="tax_group.group_name"/>:
+                <t t-esc="props.formatCurrency(tax_group.tax_amount_currency)"/>
+              </div>
+            </t>
+          </t>
+        </t>
       </div>
     </xpath>
 
@@ -62,7 +72,7 @@
     </xpath>
 
     <!-- Número de factura y datos del cliente -->
-    <xpath expr="//div[@t-if='props.data.cashier']" position="replace">
+    <xpath expr="//div[@class='pos-receipt-contact']" position="after">
       <t t-if='props.data.invoice_number and props.data.config.receipt_invoice_number'>
         <div class="afip-invoice-info" >
           <div class="text-center mb-1">

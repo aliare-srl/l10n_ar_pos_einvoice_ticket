@@ -29,7 +29,7 @@
         <span>Régimen de Transparencia Fiscal al Consumidor</span><br/>
         <span>(Ley 27.743)</span>
         <t t-if="props.data.taxTotals and props.data.taxTotals.has_tax_groups">
-          <t t-foreach="props.data.taxTotals.subtotals" t-as="subtotal">
+          <t t-foreach="props.data.taxTotals.subtotals" t-as="subtotal" t-key="subtotal_index">
             <t t-foreach="subtotal.tax_groups" t-as="tax_group" t-key="tax_group.id">
               <div>
                 <t t-esc="tax_group.group_name"/>:

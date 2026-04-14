@@ -78,7 +78,28 @@ patch(PosOrder.prototype, {
         result.headerData = result.headerData || {};
         result.headerData.config = this.config;
         result.headerData.pos = { config: this.config };
-        result.headerData.partner = this.get_partner();
+        const partner = this.get_partner();
+        if (partner) {
+            // Normalizar campos Many2one a [id, name] para uso en el template XML.
+            // En el modelo JS de Odoo 18, los campos relacionados pueden ser objetos
+            // del modelo en lugar de arrays [id, name] como en Odoo 15.
+            const normalizeMany2one = (field) => {
+                const val = partner[field];
+                if (!val) return false;
+                if (Array.isArray(val)) return val;
+                if (typeof val === 'object' && val.id) return [val.id, val.name || val.display_name || ''];
+                return false;
+            };
+            result.headerData.partner = {
+                ...partner,
+                l10n_latam_identification_type_id: normalizeMany2one('l10n_latam_identification_type_id'),
+                l10n_ar_afip_responsibility_type_id: normalizeMany2one('l10n_ar_afip_responsibility_type_id'),
+                state_id: normalizeMany2one('state_id'),
+                country_id: normalizeMany2one('country_id'),
+            };
+        } else {
+            result.headerData.partner = partner;
+        }
 
         for (const field of [
             "invoice_number", "invoice_letter", "invoice_date",

@@ -21,14 +21,20 @@ patch(PosStore.prototype, {
                 );
                 if (!invoice) continue;
 
+                const fmtDate = (s) => {
+                    if (!s) return s;
+                    const [y, m, d] = s.split('-');
+                    return `${d}/${m}/${y}`;
+                };
+
                 const moveStr = invoice.name || "";
                 Object.assign(order, {
                     invoice_number: moveStr.split(" ")[1] || moveStr,
                     invoice_letter: moveStr.substring(3, 4),
-                    invoice_date: invoice.invoice_date,
+                    invoice_date: fmtDate(invoice.invoice_date),
                     afip_qr_code: invoice.afip_qr_code,
                     afip_auth_code: invoice.afip_auth_code,
-                    afip_auth_code_due: invoice.afip_auth_code_due,
+                    afip_auth_code_due: fmtDate(invoice.afip_auth_code_due),
                     l10n_latam_document_type_id: invoice.l10n_latam_document_type_id[1].split(" ")[0],
                     l10n_latam_document_name: invoice.l10n_latam_document_type_id[1].split(" ").slice(1).join(" "),
                 });

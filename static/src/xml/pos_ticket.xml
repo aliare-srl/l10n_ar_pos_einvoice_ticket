@@ -69,7 +69,9 @@
               , <t t-esc="props.data.company.country_id[1]"/>
             </t>
           </div>
-          <div>IVA Responsable Inscripto</div>
+          <t t-if="props.data.company.l10n_ar_afip_responsibility_type_id">
+            <div><t t-esc="props.data.company.l10n_ar_afip_responsibility_type_id[1]"/></div>
+          </t>
         </t>
       </div>
     </xpath>

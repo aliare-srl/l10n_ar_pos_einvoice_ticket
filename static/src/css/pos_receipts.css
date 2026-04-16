@@ -1,8 +1,20 @@
-
 .pos-receipt .pos-receipt-contact {
     text-align: left;
     font-size: 95%;
 }
+
+.pos-receipt .afip-info,
+.pos-receipt .afip-invoice-info,
+.pos-receipt .afip-client-info,
+.pos-receipt .afip-col-header {
+    text-align: left;
+    width: 100%;
+}
+
 .pos-receipt .afip-cae-info {
     margin-top: 10px;
+}
+
+.pos-receipt .cashier {
+    width: 100%;
 }

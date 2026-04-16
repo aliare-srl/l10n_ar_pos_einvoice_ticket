@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+  <t t-name="l10n_ar_pos_einvoice_ticket.ReceiptHeader" t-inherit="point_of_sale.ReceiptHeader" t-inherit-mode="extension">
+
+    <!-- Centrar solo el separador del cashier, no el nombre -->
+    <xpath expr="//div[hasclass('cashier')]/div[1]" position="attributes">
+      <attribute name="class">text-center</attribute>
+    </xpath>
+
+  </t>
+
+</templates>

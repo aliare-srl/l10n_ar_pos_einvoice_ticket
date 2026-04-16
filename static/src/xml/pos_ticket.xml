@@ -20,8 +20,12 @@
           <t t-foreach="props.data.taxTotals.subtotals" t-as="subtotal" t-key="subtotal_index">
             <t t-foreach="subtotal.tax_groups" t-as="tax_group" t-key="tax_group.id">
               <div style="display:flex; justify-content:space-between;">
-                <span><t t-esc="tax_group.group_name"/></span>
-                <span><t t-esc="props.formatCurrency(tax_group.tax_amount_currency)"/></span>
+                <span>
+                  <t t-esc="tax_group.group_name"/>
+                </span>
+                <span>
+                  <t t-esc="props.formatCurrency(tax_group.tax_amount_currency)"/>
+                </span>
               </div>
             </t>
           </t>
@@ -37,9 +41,11 @@
             <img t-attf-src="/report/barcode/?barcode_type={{'QR'}}&amp;value={{ props.data.headerData.afip_qr_code }}&amp;width=400&amp;height=400" style="width:150px;height:150px;"/>
           </div>
         </t>
-        <strong>CAE:</strong> <t t-esc="props.data.headerData.afip_auth_code"/>
+        <strong>CAE:</strong>
+        <t t-esc="props.data.headerData.afip_auth_code"/>
         <div style="margin-top:2px;">
-          <strong>Vto. CAE:</strong> <t t-esc="props.data.headerData.afip_auth_code_due"/>
+          <strong>Vto. CAE:</strong>
+          <t t-esc="props.data.headerData.afip_auth_code_due"/>
         </div>
       </div>
     </xpath>
@@ -61,99 +67,115 @@
     <xpath expr="//t[@t-if='props.data.company.vat']" position="replace">
       <div class="afip-info">
         <t t-if='props.data.invoice_number'>
-          <div>CUIT: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.vat"/><t t-else="" t-esc="props.data.company.vat"/></div>
-          <div>Ing. Brutos: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_gross_income_number"/><t t-else="" t-esc="props.data.company.l10n_ar_gross_income_number"/></div>
-          <div>Inicio de actividades: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_afip_start_date"/><t t-else="" t-esc="props.data.company.l10n_ar_afip_start_date"/></div>
-          <div>
-            Dirección:
-            <t t-esc="props.data.company.street"/>
-            <t t-if="props.data.company.city">
-              , <t t-esc="props.data.company.city"/>
-            </t>
-            <t t-if="props.data.company.state_id">
-              , <t t-esc="props.data.company.state_id[1]"/>
-            </t>
-            <t t-if="props.data.company.country_id">
-              , <t t-esc="props.data.company.country_id[1]"/>
-            </t>
-          </div>
-          <t t-if="props.data.company.l10n_ar_afip_responsibility_type_id">
-            <div><t t-esc="props.data.company.l10n_ar_afip_responsibility_type_id[1]"/></div>
-          </t>
-        </t>
+          <div>CUIT: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.vat"/>
+          <t t-else="" t-esc="props.data.company.vat"/>
+        </div>
+        <div>Ing. Brutos: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_gross_income_number"/>
+        <t t-else="" t-esc="props.data.company.l10n_ar_gross_income_number"/>
       </div>
-    </xpath>
-
-    <!-- Número de factura y datos del cliente -->
-    <xpath expr="//div[@class='pos-receipt-contact']" position="after">
-      <t t-if='props.data.invoice_number and props.data.config.receipt_invoice_number'>
-        <div class="afip-invoice-info">
-          <div class="text-center">--------------------------------</div>
-          <strong>
-            <t t-esc="props.data.l10n_latam_document_name"/>
-            - ORIGINAL
-            <t t-if="props.data.invoice_letter == 'A'">
-              - COD <t t-esc="props.data.l10n_latam_document_type_id"/>
-            </t>
-            <br />
-            N° DE FACTURA: <t t-esc="props.data.invoice_number"/><br />
-            FECHA: <t t-esc="props.data.invoice_date"/>
-          </strong>
-          <div class="text-center">--------------------------------</div>
-        </div>
+      <div>Inicio de actividades: <t t-if="props.data.company_parent" t-esc="props.data.company_parent.l10n_ar_afip_start_date"/>
+      <t t-else="" t-esc="props.data.company.l10n_ar_afip_start_date"/>
+    </div>
+    <div>
+            Dirección:
+      <t t-esc="props.data.company.street"/>
+      <t t-if="props.data.company.city">
+              ,        <t t-esc="props.data.company.city"/>
       </t>
-      <t t-if='props.data.partner and props.data.config.receipt_customer_vat'>
-        <div class="afip-client-info" >
-          <div>CLIENTE: <t t-esc='props.data.partner.name' /></div>
-          <t t-if='props.data.invoice_number'>
-            <t t-if="props.data.partner.vat and props.data.partner.vat?.trim() !== ''">
-              <div>
-                <t t-if="props.data.partner.l10n_latam_identification_type_id">
-                  <t t-esc="props.data.partner.l10n_latam_identification_type_id[1]"/>:
-                </t>
-                <t t-else="">Doc.:</t>
-                <t t-esc="props.data.partner.vat"/>
-              </div>
-            </t>
-            <t t-if="props.data.partner.l10n_ar_afip_responsibility_type_id and props.data.partner.name !='Consumidor Final'">
-              <div><t t-esc='props.data.partner.l10n_ar_afip_responsibility_type_id[1]' /></div>
-            </t>
-          </t>
-          <t t-if="props.data.partner.street">
-            <div>
-              CALLE: <t t-esc="props.data.partner.street"/>
-              <t t-if="props.data.partner.city">
-                , <t t-esc="props.data.partner.city"/>
-              </t>
-              <t t-if="props.data.partner.state_id">
-                , <t t-esc="props.data.partner.state_id[1]"/>
-              </t>
-              <t t-if="props.data.partner.country_id">
-                , <t t-esc="props.data.partner.country_id[1]"/>
-              </t>
-            </div>
-            <t t-if="props.data.partner.email">
-              <div>Email: <t t-esc="props.data.partner.email"/></div>
-            </t>
-            <t t-if="props.data.partner.phone or props.data.partner.mobile">
-              <div>Tel: <t t-esc="props.data.partner.phone || props.data.partner.mobile"/></div>
-            </t>
-            <t t-if="props.data.partner.website">
-              <div>Website: <t t-esc="props.data.partner.website"/></div>
-            </t>
-          </t>
-        </div>
+      <t t-if="props.data.company.state_id">
+              ,        <t t-esc="props.data.company.state_id.name"/>
       </t>
-      <br/>
-      <strong>
-        <div>DESCRIPCIÓN</div>
-        <div>
-          CANT. x PRECIO UNIT.
-          <span class="price_display pos-receipt-right-align">IMPORTE</span>
-        </div>
-      </strong>
-    </xpath>
-
+      <t t-if="props.data.company.country_id">
+              ,        <t t-esc="props.data.company.country_id.name"/>
+      </t>
+    </div>
+    <t t-if="props.data.company.l10n_ar_afip_responsibility_type_id">
+      <div>
+        <t t-esc="props.data.company.l10n_ar_afip_responsibility_type_id.name"/>
+      </div>
+    </t>
   </t>
+</div>
+</xpath>
+
+<!-- Número de factura y datos del cliente -->
+<xpath expr="//div[@class='pos-receipt-contact']" position="after">
+<t t-if='props.data.invoice_number and props.data.config.receipt_invoice_number'>
+  <div class="afip-invoice-info">
+    <div class="text-center">--------------------------------</div>
+    <strong>
+      <t t-esc="props.data.l10n_latam_document_name"/>
+            - ORIGINAL
+      <t t-if="props.data.invoice_letter == 'A'">
+              - COD <t t-esc="props.data.l10n_latam_document_type_id"/>
+      </t>
+      <br />
+            N° DE FACTURA: <t t-esc="props.data.invoice_number"/>
+    <br />
+            FECHA: <t t-esc="props.data.invoice_date"/>
+  </strong>
+  <div class="text-center">--------------------------------</div>
+</div>
+</t>
+<t t-if='props.data.partner and props.data.config.receipt_customer_vat'>
+<div class="afip-client-info">
+  <div>CLIENTE: <t t-esc='props.data.partner.name' />
+  </div>
+  <t t-if='props.data.invoice_number'>
+    <t t-if="props.data.partner.vat and props.data.partner.vat?.trim() !== ''">
+      <div>
+        <t t-if="props.data.partner.l10n_latam_identification_type_id">
+          <t t-esc="props.data.partner.l10n_latam_identification_type_id.name"/>
+:
+        </t>
+        <t t-else="">Doc.:</t>
+        <t t-esc="props.data.partner.vat"/>
+      </div>
+    </t>
+    <t t-if="props.data.partner.l10n_ar_afip_responsibility_type_id and props.data.partner.name !='Consumidor Final'">
+      <div>
+        <t t-esc='props.data.partner.l10n_ar_afip_responsibility_type_id.name' />
+      </div>
+    </t>
+  </t>
+  <t t-if="props.data.partner.street">
+    <div>
+              CALLE: <t t-esc="props.data.partner.street"/>
+    <t t-if="props.data.partner.city">
+                ,      <t t-esc="props.data.partner.city"/>
+    </t>
+    <t t-if="props.data.partner.state_id">
+                ,      <t t-esc="props.data.partner.state_id.name"/>
+    </t>
+    <t t-if="props.data.partner.country_id">
+                ,      <t t-esc="props.data.partner.country_id.name"/>
+    </t>
+  </div>
+  <t t-if="props.data.partner.email">
+    <div>Email: <t t-esc="props.data.partner.email"/>
+    </div>
+  </t>
+  <t t-if="props.data.partner.phone or props.data.partner.mobile">
+    <div>Tel: <t t-esc="props.data.partner.phone || props.data.partner.mobile"/>
+    </div>
+  </t>
+  <t t-if="props.data.partner.website">
+    <div>Website: <t t-esc="props.data.partner.website"/>
+    </div>
+  </t>
+</t>
+</div>
+</t>
+<br/>
+<strong class="afip-col-header">
+<div>DESCRIPCIÓN</div>
+<div>
+          CANT. x PRECIO UNIT.
+<span class="price_display pos-receipt-right-align">IMPORTE</span>
+</div>
+</strong>
+</xpath>
+
+</t>
 
 </templates>

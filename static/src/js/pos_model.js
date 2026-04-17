@@ -2,6 +2,7 @@
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
 import { PosOrder } from "@point_of_sale/app/models/pos_order";
+import { formatCurrency } from "@point_of_sale/app/models/utils/currency";
 
 patch(PosStore.prototype, {
     async postSyncAllOrders(orders) {
@@ -91,6 +92,40 @@ patch(PosOrder.prototype, {
                 result.headerData[field] = this[field];
             }
         }
+
+        const fmtDate = (s) => {
+            if (!s) return s;
+            const [y, m, d] = s.split('-');
+            return `${d}/${m}/${y}`;
+        };
+        if (result.headerData.company?.l10n_ar_afip_start_date) {
+            result.headerData.company = {
+                ...result.headerData.company,
+                l10n_ar_afip_start_date: fmtDate(result.headerData.company.l10n_ar_afip_start_date),
+            };
+        }
+        if (result.headerData.company_parent?.l10n_ar_afip_start_date) {
+            result.headerData.company_parent = {
+                ...result.headerData.company_parent,
+                l10n_ar_afip_start_date: fmtDate(result.headerData.company_parent.l10n_ar_afip_start_date),
+            };
+        }
+
+        const sortedLines = this.getSortedOrderlines();
+        result.orderlines = result.orderlines.map((lineData, i) => {
+            const line = sortedLines[i];
+            if (!line) return lineData;
+            const prices = line.get_all_prices();
+            const qty = Math.abs(line.get_quantity()) || 1;
+            const taxesData = prices.taxesData || [];
+            return {
+                ...lineData,
+                priceNet: formatCurrency(prices.priceWithoutTax, line.currency),
+                unitPriceNet: formatCurrency(prices.priceWithoutTax / qty, line.currency),
+                taxLabel: taxesData.length ? taxesData[0].tax.name : "",
+            };
+        });
+
         return result;
     },
 });

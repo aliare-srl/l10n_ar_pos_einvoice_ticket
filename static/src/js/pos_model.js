@@ -2,6 +2,7 @@
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
 import { PosOrder } from "@point_of_sale/app/models/pos_order";
+import { formatCurrency } from "@point_of_sale/app/models/utils/currency";
 
 patch(PosStore.prototype, {
     async postSyncAllOrders(orders) {
@@ -21,14 +22,20 @@ patch(PosStore.prototype, {
                 );
                 if (!invoice) continue;
 
+                const fmtDate = (s) => {
+                    if (!s) return s;
+                    const [y, m, d] = s.split('-');
+                    return `${d}/${m}/${y}`;
+                };
+
                 const moveStr = invoice.name || "";
                 Object.assign(order, {
                     invoice_number: moveStr.split(" ")[1] || moveStr,
                     invoice_letter: moveStr.substring(3, 4),
-                    invoice_date: invoice.invoice_date,
+                    invoice_date: fmtDate(invoice.invoice_date),
                     afip_qr_code: invoice.afip_qr_code,
                     afip_auth_code: invoice.afip_auth_code,
-                    afip_auth_code_due: invoice.afip_auth_code_due,
+                    afip_auth_code_due: fmtDate(invoice.afip_auth_code_due),
                     l10n_latam_document_type_id: invoice.l10n_latam_document_type_id[1].split(" ")[0],
                     l10n_latam_document_name: invoice.l10n_latam_document_type_id[1].split(" ").slice(1).join(" "),
                 });
@@ -72,7 +79,8 @@ patch(PosOrder.prototype, {
         result.headerData = result.headerData || {};
         result.headerData.config = this.config;
         result.headerData.pos = { config: this.config };
-        result.headerData.partner = this.get_partner();
+        const partner = this.get_partner();
+        result.headerData.partner = partner || false;
 
         for (const field of [
             "invoice_number", "invoice_letter", "invoice_date",
@@ -84,6 +92,40 @@ patch(PosOrder.prototype, {
                 result.headerData[field] = this[field];
             }
         }
+
+        const fmtDate = (s) => {
+            if (!s) return s;
+            const [y, m, d] = s.split('-');
+            return `${d}/${m}/${y}`;
+        };
+        if (result.headerData.company?.l10n_ar_afip_start_date) {
+            result.headerData.company = {
+                ...result.headerData.company,
+                l10n_ar_afip_start_date: fmtDate(result.headerData.company.l10n_ar_afip_start_date),
+            };
+        }
+        if (result.headerData.company_parent?.l10n_ar_afip_start_date) {
+            result.headerData.company_parent = {
+                ...result.headerData.company_parent,
+                l10n_ar_afip_start_date: fmtDate(result.headerData.company_parent.l10n_ar_afip_start_date),
+            };
+        }
+
+        const sortedLines = this.getSortedOrderlines();
+        result.orderlines = result.orderlines.map((lineData, i) => {
+            const line = sortedLines[i];
+            if (!line) return lineData;
+            const prices = line.get_all_prices();
+            const qty = Math.abs(line.get_quantity()) || 1;
+            const taxesData = prices.taxesData || [];
+            return {
+                ...lineData,
+                priceNet: formatCurrency(prices.priceWithoutTax, line.currency),
+                unitPriceNet: formatCurrency(prices.priceWithoutTax / qty, line.currency),
+                taxLabel: taxesData.length ? taxesData[0].tax.name : "",
+            };
+        });
+
         return result;
     },
 });

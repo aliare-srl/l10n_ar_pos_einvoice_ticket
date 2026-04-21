@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+  <t t-name="l10n_ar_pos_einvoice_ticket.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
+
+    <!-- Ocultar pos-receipt-taxes para letra B (mostrar solo impuestos combinados) -->
+    <xpath expr="//div[@class='pos-receipt-taxes']" position="attributes">
+      <attribute name="t-if" position="add" separator=" and ">props.data.headerData.invoice_letter !== 'B'</attribute>
+    </xpath>
+
+    <!-- Régimen de Transparencia Fiscal para letra B - después de before-footer -->
+    <xpath expr="//div[@class='before-footer']" position="after">
+      <div t-if="props.data.headerData.invoice_letter == 'B'" style="margin-top:10px; font-size: 10px; text-align: left;">
+        <div>Régimen de Transparencia Fiscal al Consumidor (Ley 27.743)</div>
+        <t t-if="props.data.taxTotals and props.data.taxTotals.has_tax_groups">
+          <div style="display:flex; justify-content:space-between;">
+            <strong>Descripción</strong>
+            <strong>Importe</strong>
+          </div>
+          <t t-foreach="props.data.taxTotals.subtotals" t-as="subtotal" t-key="subtotal_index">
+            <t t-foreach="subtotal.tax_groups" t-as="tax_group" t-key="tax_group.id">
+              <div style="display:flex; justify-content:space-between;">
+                <span>
+                  <t t-esc="tax_group.group_name"/>
+                </span>
+                <span>
+                  <t t-esc="props.formatCurrency(tax_group.tax_amount_currency)"/>
+                </span>
+              </div>
+            </t>
+          </t>
+        </t>
+      </div>
+    </xpath>
+
+    <!-- Información CAE, QR y vencimiento - después de pos-receipt-order-data -->
+    <xpath expr="//div[@class='pos-receipt-order-data']" position="after">
+      <div t-if="props.data.headerData.afip_auth_code and props.data.headerData.config.receipt_invoice_number" class="afip-cae-info" style="text-align: center; font-size: 100%; margin-top: 30px;">
+        <t t-if="props.data.headerData.afip_qr_code">
+          <div style="overflow: hidden;">
+            <img t-attf-src="/report/barcode/?barcode_type={{'QR'}}&amp;value={{ props.data.headerData.afip_qr_code }}&amp;width=400&amp;height=400" style="width:150px;height:150px;"/>
+          </div>
+        </t>
+        <strong>CAE:</strong>
+        <t t-esc="props.data.headerData.afip_auth_code"/>
+        <div style="margin-top:2px;">
+          <strong>Vto. CAE:</strong>
+          <t t-esc="props.data.headerData.afip_auth_code_due"/>
+        </div>
+      </div>
+    </xpath>
+
+    <!-- Orderline para Factura A: precio neto + etiqueta IVA -->
+    <xpath expr="//Orderline" position="replace">
+      <t t-if="props.data.headerData.invoice_letter === 'A'">
+        <li class="orderline px-0">
+          <div style="display:flex; justify-content:space-between;">
+            <span class="product-name"><t t-esc="line.productName"/></span>
+            <span style="text-align:right; white-space:nowrap;">
+              <t t-esc="line.taxLabel"/>&#160;<t t-esc="line.priceNet"/>
+            </span>
+          </div>
+          <div class="price-per-unit" style="font-size:80%;">
+            <t t-esc="line.qty"/> x <t t-esc="line.unitPriceNet"/> / <t t-esc="line.unit"/>
+          </div>
+          <li t-if="line.customerNote" class="customer-note w-100 p-2 my-1 rounded text-break">
+            <i class="fa fa-sticky-note me-1" role="img" aria-label="Customer Note" title="Customer Note"/>
+            <t t-esc="line.customerNote" />
+          </li>
+        </li>
+      </t>
+      <t t-else="">
+        <Orderline basic_receipt="props.basic_receipt" line="omit(scope.line, 'customerNote', 'priceNet', 'unitPriceNet', 'taxLabel')" class="{ 'px-0': true }" showTaxGroupLabels="showTaxGroupLabels">
+          <li t-if="line.customerNote" class="customer-note w-100 p-2 my-1 rounded text-break">
+            <i class="fa fa-sticky-note me-1" role="img" aria-label="Customer Note" title="Customer Note"/>
+            <t t-esc="line.customerNote" />
+          </li>
+        </Orderline>
+      </t>
+    </xpath>
+
+  </t>
+
+</templates>

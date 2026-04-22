@@ -1,102 +1,130 @@
 /** @odoo-module */
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
-import { Order } from "@point_of_sale/app/store/models";
-import { TicketScreen } from "@point_of_sale/app/screens/ticket_screen/ticket_screen";
-import { ErrorPopup } from "@point_of_sale/app/utils/popups/popups";
-import { _t } from "@web/core/l10n/translation";
+import { PosOrder } from "@point_of_sale/app/models/pos_order";
+import { formatCurrency } from "@point_of_sale/app/models/utils/currency";
 
 patch(PosStore.prototype, {
-    async _flush_orders(orders, options = {}) {
-        const res = super._flush_orders(...arguments);
-        res.then(async (order_server_id) => {
-            for (const order of orders) {
-                if (!order.to_invoice) {
-                    const orm = options.to_invoice ? this.orm : this.orm.silent;
+    async postSyncAllOrders(orders) {
+        await super.postSyncAllOrders(orders);
+        for (const order of orders) {
+            if (!order.to_invoice) continue;
+            const accountMoveId = order.raw.account_move;
+            if (!accountMoveId) continue;
+
+            try {
+                const [invoice] = await this.data.call(
+                    "account.move", "search_read",
+                    [[["id", "=", accountMoveId]],
+                     ["name", "invoice_date", "afip_auth_code",
+                      "afip_auth_code_due", "afip_qr_code",
+                      "l10n_latam_document_type_id"]]
+                );
+                if (!invoice) continue;
+
+                const fmtDate = (s) => {
+                    if (!s) return s;
+                    const [y, m, d] = s.split('-');
+                    return `${d}/${m}/${y}`;
+                };
+
+                const moveStr = invoice.name || "";
+                Object.assign(order, {
+                    invoice_number: moveStr.split(" ")[1] || moveStr,
+                    invoice_letter: moveStr.substring(3, 4),
+                    invoice_date: fmtDate(invoice.invoice_date),
+                    afip_qr_code: invoice.afip_qr_code,
+                    afip_auth_code: invoice.afip_auth_code,
+                    afip_auth_code_due: fmtDate(invoice.afip_auth_code_due),
+                    l10n_latam_document_type_id: invoice.l10n_latam_document_type_id[1].split(" ")[0],
+                    l10n_latam_document_name: invoice.l10n_latam_document_type_id[1].split(" ").slice(1).join(" "),
+                });
+
+                const parentId = this.company.parent_id?.[0];
+                if (parentId) {
+                    order.company_parent_name = this.company.parent_id[1];
                     try {
-                        const output = await orm.call("pos.order", "read", [order_server_id[0].id, ["account_move"]]);
-                        if (output.length) {
-                            const moveStr = output[0].account_move[1];
-                            const invoice_number = moveStr.split(" ")[1];
-                            const invoice_letter = moveStr.substring(3, 4);
-                            const account_move = output[0].account_move[0];
-
-                            const current_order = this.get_order();
-                            Object.assign(current_order, {
-                                invoice_number,
-                                invoice_letter,
-                                company_parent_name: current_order.pos.company.parent_id[1],
-                            });
-
-                            try {
-                                const [company] = await orm.call("res.company", "search_read", [[['id', '=', current_order.pos.company.parent_id[0]]], ['name', 'vat', 'l10n_ar_gross_income_number', 'l10n_ar_afip_start_date']]);
-                                current_order.company_parent = company;
-                            } catch (err) {
-                                console.error("Company fetch error:", err);
-                            }
-
-                            try {
-                                const [invoice] = await orm.call("account.move", "search_read", [[['id', '=', account_move]], ['invoice_date', 'l10n_ar_afip_auth_code', 'l10n_ar_afip_auth_code_due', 'l10n_ar_afip_qr_code', 'l10n_latam_document_type_id']]);
-                                Object.assign(current_order, {
-                                    invoice_date: invoice.invoice_date,
-                                    l10n_ar_afip_qr_code: invoice.l10n_ar_afip_qr_code,
-                                    l10n_ar_afip_auth_code: invoice.l10n_ar_afip_auth_code,
-                                    l10n_ar_afip_auth_code_due: invoice.l10n_ar_afip_auth_code_due,
-                                    l10n_latam_document_type_id: invoice.l10n_latam_document_type_id[1].split(" ")[0],
-                                    l10n_latam_document_name: invoice.l10n_latam_document_type_id[1].split(" ").slice(1).join(" "),
-                                });
-                            } catch (err) {
-                                console.error("Invoice fetch error:", err);
-                            }
-                        }
+                        const [company] = await this.data.call(
+                            "res.company", "search_read",
+                            [[["id", "=", parentId]],
+                             ["name", "vat", "l10n_ar_gross_income_number", "l10n_ar_afip_start_date"]]
+                        );
+                        order.company_parent = company;
                     } catch (err) {
-                        console.error("Flush order error:", err);
+                        console.error("Company fetch error:", err);
                     }
                 }
+            } catch (err) {
+                console.error("postSyncAllOrders AFIP error:", err);
             }
-        });
-        return res;
+        }
     },
 });
 
-patch(Order.prototype, {
-    setup() {
-        super.setup(...arguments);
-        if (!this.get_partner()) {
-            const [default_partner_id] = this.pos.config.default_partner_id;
-            const partner = this.pos.db.get_partner_by_id(default_partner_id);
+patch(PosOrder.prototype, {
+    setup(vals) {
+        super.setup(vals);
+        if (!this.get_partner() && this.config?.default_partner_id) {
+            const partnerId = this.config.default_partner_id?.id
+                || this.config.default_partner_id;
+            const partner = this.models["res.partner"].get(partnerId);
             if (partner) {
                 this.set_partner(partner);
             }
         }
-        this.set_to_invoice(this.pos.config.pos_auto_invoice);
     },
 
-    export_for_printing() {
-        const result = super.export_for_printing(...arguments);
+    export_for_printing(baseUrl, headerData) {
+        const result = super.export_for_printing(baseUrl, headerData);
         result.headerData = result.headerData || {};
-        result.headerData.pos = result.headerData.pos || {};
-        result.headerData.pos.config = this.pos.config;
-        result.headerData.partner = this.get_partner();
+        result.headerData.config = this.config;
+        result.headerData.pos = { config: this.config };
+        const partner = this.get_partner();
+        result.headerData.partner = partner || false;
 
-        const fields = [
-            "invoice_number",
-            "invoice_letter",
-            "invoice_date",
-            "l10n_ar_afip_qr_code",
-            "l10n_ar_afip_auth_code",
-            "l10n_ar_afip_auth_code_due",
-            "l10n_latam_document_type_id",
-            "l10n_latam_document_name",
-            "company_parent",
-            "company_parent_name"
-        ];
-
-        for (const field of fields) {
-            if (this[field]) {
+        for (const field of [
+            "invoice_number", "invoice_letter", "invoice_date",
+            "afip_qr_code", "afip_auth_code", "afip_auth_code_due",
+            "l10n_latam_document_type_id", "l10n_latam_document_name",
+            "company_parent", "company_parent_name",
+        ]) {
+            if (this[field] !== undefined) {
                 result.headerData[field] = this[field];
             }
         }
+
+        const fmtDate = (s) => {
+            if (!s) return s;
+            const [y, m, d] = s.split('-');
+            return `${d}/${m}/${y}`;
+        };
+        if (result.headerData.company?.l10n_ar_afip_start_date) {
+            result.headerData.company = {
+                ...result.headerData.company,
+                l10n_ar_afip_start_date: fmtDate(result.headerData.company.l10n_ar_afip_start_date),
+            };
+        }
+        if (result.headerData.company_parent?.l10n_ar_afip_start_date) {
+            result.headerData.company_parent = {
+                ...result.headerData.company_parent,
+                l10n_ar_afip_start_date: fmtDate(result.headerData.company_parent.l10n_ar_afip_start_date),
+            };
+        }
+
+        const sortedLines = this.getSortedOrderlines();
+        result.orderlines = result.orderlines.map((lineData, i) => {
+            const line = sortedLines[i];
+            if (!line) return lineData;
+            const prices = line.get_all_prices();
+            const qty = Math.abs(line.get_quantity()) || 1;
+            const taxesData = prices.taxesData || [];
+            return {
+                ...lineData,
+                priceNet: formatCurrency(prices.priceWithoutTax, line.currency),
+                unitPriceNet: formatCurrency(prices.priceWithoutTax / qty, line.currency),
+                taxLabel: taxesData.length ? taxesData[0].tax.name : "",
+            };
+        });
 
         return result;
     },
